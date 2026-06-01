@@ -19,16 +19,16 @@ const int heightAsteroid = 70;
 bool playerDead = false;
 int score;
 
-//A - elemento 1 
-//B - elemento 2
+// A - element 1
+// B - element 2
 
-bool colision(float Ax, float Ay, float Awidth, float Aheight, float Bx, float By, float Bwidth, float Bheight){
+bool collision(float Ax, float Ay, float Awidth, float Aheight, float Bx, float By, float Bwidth, float Bheight){
     if( Ay+ Aheight < By) return false;
     else if(Ay > By + Bheight) return false;
     else if(Ax + Awidth < Bx) return false;
     else if(Ax > Bx + Bwidth) return false;
 
-    return true;    //houve colisao
+    return true;    // collision occurred
 }
 
 
@@ -98,7 +98,7 @@ public:
 };
 
 
-class ProjeteisClass{
+class ProjectileClass{
 private:
     Vector position;
     Vector velocity;
@@ -106,7 +106,7 @@ private:
     SDL_Rect rect;
     //Mix_Chunk* asteroidDestroy;
 public:
-    ProjeteisClass(const float x, const float y): position(x, y), speed(100) {
+    ProjectileClass(const float x, const float y): position(x, y), speed(100) {
         rect = { static_cast<int>(position.x), static_cast<int>(position.y), 10, 10};
 
         velocity.y = -speed;
@@ -116,25 +116,25 @@ public:
         return position;
     }
 
-    void movimentation(float dt, std::list<AsteroidsClass>& asteroides, std::list<ProjeteisClass>& projectil){
+    void movement(float dt, std::list<AsteroidsClass>& asteroids, std::list<ProjectileClass>& projectiles){
         position += velocity * dt;
         rect.y = static_cast<int>(position.y);
         rect.x = static_cast<int>(position.x);
         
 
-        for(auto ast_it = asteroides.begin(); ast_it != asteroides.end();){
+        for(auto ast_it = asteroids.begin(); ast_it != asteroids.end();){
             Vector position_o = ast_it->getP();
             SDL_Rect rectangle = ast_it->getRect();
             
             bool asteroidDestroyed = false;
             
-            for(auto proj_it = projectil.begin(); proj_it != projectil.end();){
+            for(auto proj_it = projectiles.begin(); proj_it != projectiles.end();){
                 Vector position_proj = proj_it->getPosition();
 
-                if(colision(position_proj.x, position_proj.y, 10, 10, position_o.x, position_o.y, widthAsteroid, heightAsteroid) == true){
-                    std::cout << "tocou" << std::endl;
+                if(collision(position_proj.x, position_proj.y, 10, 10, position_o.x, position_o.y, widthAsteroid, heightAsteroid) == true){
+                    std::cout << "hit" << std::endl;
 
-                    proj_it = projectil.erase(proj_it);
+                    proj_it = projectiles.erase(proj_it);
                     asteroidDestroyed = true;
 
 
@@ -145,7 +145,7 @@ public:
             }
 
             if(asteroidDestroyed == true){
-                ast_it = asteroides.erase(ast_it);
+                ast_it = asteroids.erase(ast_it);
                 //Mix_PlayChannel(-1, asteroidDestroy, 0);
                 score++;
                 std::cout << score << std::endl;
@@ -155,7 +155,7 @@ public:
         }
     }
 
-    void renderr(SDL_Renderer* renderer){
+    void render(SDL_Renderer* renderer){
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &rect);
     }
@@ -166,7 +166,7 @@ class Player{
 private:
     Vector position;
     Vector velocity;
-    //Mix_Chunk* projectilSound;
+    //Mix_Chunk* projectileSound;
     float speed;
     SDL_Rect rect;
     SDL_Renderer* renderer;
@@ -178,7 +178,7 @@ public:
 
     bool spacePressed;
 
-    void handleEvents(float dt, std::list<ProjeteisClass>& projectil, SDL_Event& event){
+    void handleEvents(float dt, std::list<ProjectileClass>& projectiles, SDL_Event& event){
         if(event.type == SDL_KEYDOWN){
             switch(event.key.keysym.sym){
                 case SDLK_UP:
@@ -194,8 +194,8 @@ public:
                     velocity.x = speed;
                     break;
                 case SDLK_SPACE:
-                    std::cout << "criou" << std::endl;
-                    projectil.push_back(ProjeteisClass(position.x + 20, position.y));
+                    std::cout << "created" << std::endl;
+                    projectiles.push_back(ProjectileClass(position.x + 20, position.y));
                     break;
             }
         }
@@ -229,12 +229,12 @@ public:
             velocity.x = 0;
         }
     
-        // Verifica se a tecla foi pressionada e ainda não foi solta
+        // Check if the key was pressed and not yet released
             if(keys[SDL_SCANCODE_SPACE] && !spacePressed){
-                std::cout << "criou" << std::endl;
-                projectil.push_back(ProjeteisClass(position.x + 20, position.y));
+                std::cout << "created" << std::endl;
+                projectiles.push_back(ProjectileClass(position.x + 20, position.y));
                 spacePressed = true;
-                //Mix_PlayChannel(-1, projectilSound, 0);
+                //Mix_PlayChannel(-1, projectileSound, 0);
             }
 
             if(!keys[SDL_SCANCODE_SPACE]){
@@ -269,11 +269,11 @@ private:
     SDL_Window* window;
     SDL_Renderer* renderer;
     TTF_Font* font;
-    Mix_Chunk* projectilSound;
+    Mix_Chunk* projectileSound;
     Mix_Chunk* asteroidDestroy;
     Mix_Music* asteroidTheme;
-    std::list<AsteroidsClass> asteroides;
-    std::list<ProjeteisClass> projectil;
+    std::list<AsteroidsClass> asteroids;
+    std::list<ProjectileClass> projectiles;
     bool isRunning;
     Player* player;
     SDL_Event event;
@@ -282,8 +282,8 @@ public:
 
     bool initialize(const char* title, int width, int height){
         if (SDL_Init(SDL_INIT_VIDEO) != 0 || TTF_Init() == -1) {  
-            std::cerr << "Erro ao inicializar o SDL2: " <<   SDL_GetError() << std::endl;
-            return -1; //encerra o programa
+            std::cerr << "Failed to initialize SDL2: " <<   SDL_GetError() << std::endl;
+            return -1; // exit program
         }
 
         window = SDL_CreateWindow(title,
@@ -293,48 +293,48 @@ public:
                                 SDL_WINDOW_SHOWN);  
 
         if (!window) {
-            std::cerr << "Erro ao criar a janela: " << SDL_GetError() << std::endl;
+            std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
             SDL_Quit();
             return -1;
         }
 
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
         if (!renderer) { 
-            std::cerr << "Erro ao criar o renderer: " << SDL_GetError() << std::endl;
+            std::cerr << "Failed to create renderer: " << SDL_GetError() << std::endl;
             SDL_DestroyRenderer(renderer);
             SDL_Quit();
             return false;
         }
 
         if (Mix_Init(MIX_INIT_MP3) != MIX_INIT_MP3) {
-            std::cerr << "Erro ao inicializar o SDL_mixer: " << Mix_GetError() << std::endl;
+            std::cerr << "Failed to initialize SDL_mixer: " << Mix_GetError() << std::endl;
             SDL_DestroyRenderer(renderer);
             SDL_Quit();
         }
 
-        if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) < 0) {  //22050: Frequência de amostragem (número de samples por segundo). Aqui, é definido 22050 Hz, o que é uma taxa de áudio razoável. 2: O número de canais de áudio (2 significa estéreo).
-                                                                   //4096: O tamanho do buffer de áudio, ou seja, quanto de dados de áudio o sistema deve manter em memória antes de começar a processar o áudio.
-            std::cerr << "Erro ao abrir o áudio: " << Mix_GetError() << std::endl;
+        if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) < 0) {  // 22050: sample rate (samples per second). 2: audio channels (stereo).
+                                                                   // 4096: audio buffer size (bytes kept in memory before playback).
+            std::cerr << "Failed to open audio: " << Mix_GetError() << std::endl;
             SDL_DestroyRenderer(renderer);
             Mix_Quit();
             SDL_Quit();
         } else { 
-            std::cout << "Áudio inicializado com sucesso!" << std::endl;
+            std::cout << "Audio initialized successfully!" << std::endl;
         }
 
         asteroidDestroy = Mix_LoadWAV("asteroidsDestroyed.wav");
         if (!asteroidDestroy) {
-            std::cerr << "Som de colisão não carregado: " << Mix_GetError() << std::endl;
+            std::cerr << "Collision sound failed to load: " << Mix_GetError() << std::endl;
         }
 
-        projectilSound = Mix_LoadWAV("projectilSound.wav");
-        if (!projectilSound) {
-            std::cerr << "Som de colisão não carregado: " << Mix_GetError() << std::endl;
+        projectileSound = Mix_LoadWAV("projectileSound.wav");
+        if (!projectileSound) {
+            std::cerr << "Projectile sound failed to load: " << Mix_GetError() << std::endl;
         }
 
         asteroidTheme = Mix_LoadMUS("asteroidsMusicTheme.mp3");
         if(!asteroidTheme){
-            std::cerr << "Erro ao carregar a música: " << Mix_GetError() << std::endl;
+            std::cerr << "Failed to load music: " << Mix_GetError() << std::endl;
             return false;
         }
 
@@ -342,7 +342,7 @@ public:
 
         font = TTF_OpenFont("arial.ttf", 24);
         if(!font){
-            std::cout << "Erro ao criar font" << std::endl;
+            std::cout << "Failed to create font" << std::endl;
         }
 
         player = new Player(width / 2, height / 2);
@@ -352,14 +352,14 @@ public:
      }
 
     void renderText(SDL_Renderer* renderer, TTF_Font* font, int score, int x, int y){
-        SDL_Color textColor = {255, 255, 255, 255}; //cria uma cor
-        std::string scoreText = "Score: " + std::to_string(score); //cria a string ScoreText para mostrar na tela a pontuação
+        SDL_Color textColor = {255, 255, 255, 255}; // text color
+        std::string scoreText = "Score: " + std::to_string(score); // score string for on-screen display
 
-        SDL_Surface* textSurface = TTF_RenderText_Solid(font, scoreText.c_str(), textColor); //renderiza o texto como superficie, ele transforma o texto em uma superficie SDL
-        SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface); //transforma a superfície em uma textura SDL para que possa ser renderizada
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, scoreText.c_str(), textColor); // render text to SDL surface
+        SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface); // surface to texture for rendering
 
-        SDL_Rect textRect = {x, y, textSurface->w, textSurface->h}; //x, y e o tamanho do texto
-        SDL_RenderCopy(renderer, textTexture, NULL, &textRect); //copia a textura para a tela
+        SDL_Rect textRect = {x, y, textSurface->w, textSurface->h}; // position and text size
+        SDL_RenderCopy(renderer, textTexture, NULL, &textRect); // draw texture to screen
 
         SDL_FreeSurface(textSurface);
         SDL_DestroyTexture(textTexture);
@@ -368,7 +368,7 @@ public:
     void game_reset(){
         player->setPosition(widthWindow / 2, heightWindow / 2);
 
-        for(auto& ast : asteroides){
+        for(auto& ast : asteroids){
             for(int i = 0; i <= 5; i++){
             ast.setPosition( 70 + (rand() % (widthWindow - (70 * 2))), 70 + (rand() % (heightWindow - (70 * 2))));
             }
@@ -376,7 +376,7 @@ public:
 
         score = 0;
 
-        std::cout << "jogo resetado" << std::endl;
+        std::cout << "game reset" << std::endl;
     }
 
     void run(){
@@ -387,9 +387,9 @@ public:
             float currentTime = getTime();
             float dt = currentTime - previousTime;
             previousTime = currentTime;
-            while(asteroides.empty()){
+            while(asteroids.empty()){
                 for(int i = 0; i <= 5; i++){
-                    asteroides.push_back(AsteroidsClass( 80 + (rand() % (widthWindow - (80 * 2))), 80 + (rand() % (heightWindow - (80 * 2))), 70));
+                    asteroids.push_back(AsteroidsClass( 80 + (rand() % (widthWindow - (80 * 2))), 80 + (rand() % (heightWindow - (80 * 2))), 70));
                 }
             }
             handleEvents(dt);
@@ -400,18 +400,18 @@ public:
     }
 
     void render(float dt){
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Cor preta
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // black background
         SDL_RenderClear(renderer);
 
         renderText(renderer, font, score, 50, 50);
 
         player->render(renderer);
         
-        for(auto& projetil : projectil){
-            projetil.renderr(renderer);
+        for(auto& projectile : projectiles){
+            projectile.render(renderer);
         }
 
-        for(auto& ast : asteroides){
+        for(auto& ast : asteroids){
             ast.render(renderer);
         }
 
@@ -429,29 +429,29 @@ public:
                 isRunning = false;
             }
 
-            player->handleEvents(dt, projectil, event);
+            player->handleEvents(dt, projectiles, event);
 
         }
 
         const Uint8* keys = SDL_GetKeyboardState(NULL);
         
         
-        for(auto& projetil : projectil){
-            projetil.movimentation(dt, asteroides, projectil);
+        for(auto& projectile : projectiles){
+            projectile.movement(dt, asteroids, projectiles);
         }
 
         
 
-        for(auto& ast : asteroides){
+        for(auto& ast : asteroids){
 
             ast.move(dt);
             
             Vector position_p = player->position_player();
             Vector position_o = ast.getP();
 
-            if(colision(position_p.x, position_p.y, widthPlayer, heightPlayer, position_o.x, position_o.y, widthAsteroid, heightAsteroid) == true){
+            if(collision(position_p.x, position_p.y, widthPlayer, heightPlayer, position_o.x, position_o.y, widthAsteroid, heightAsteroid) == true){
                 playerDead = true;
-                std::cout << "tocou" << std::endl;
+                std::cout << "hit" << std::endl;
                 game_reset();
             }
         }
@@ -461,7 +461,7 @@ public:
     void clean(){
         delete player;
         TTF_CloseFont(font);
-        Mix_FreeChunk(projectilSound);
+        Mix_FreeChunk(projectileSound);
         Mix_FreeChunk(asteroidDestroy);
         Mix_FreeMusic(asteroidTheme); 
         SDL_DestroyRenderer(renderer);
